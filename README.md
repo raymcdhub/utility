@@ -18,15 +18,18 @@ and emails a notification whenever a new listing appears.
 ## Setup
 
 1. Push this repo to GitHub (already done if you're reading this there).
-2. Add these repository secrets (Settings → Secrets and variables → Actions):
-   - `SMTP_USERNAME` — your Outlook.com email address (e.g. `rayraa@outlook.ie`)
-   - `SMTP_PASSWORD` — an **app password** for that account, not your normal
-     login password. Generate one at
-     https://account.live.com/proofs/AppPassword (requires two-step
-     verification to be turned on for the Microsoft account first).
-   - `EMAIL_FROM` — usually the same as `SMTP_USERNAME`
-   - `EMAIL_TO` — `rayraa@outlook.ie` (or wherever notifications should go)
-3. The workflow at `.github/workflows/check-opportunities.yml` runs on a
+2. Sign up at https://resend.com and create an API key (free tier covers
+   this easily). Note: without verifying a custom sending domain, Resend's
+   sandbox sender (`onboarding@resend.dev`) can only deliver to the email
+   address you signed up with — that's fine here since notifications go to
+   your own inbox anyway.
+3. Add these repository secrets (Settings → Secrets and variables → Actions):
+   - `RESEND_API_KEY` — the API key from Resend
+   - `EMAIL_FROM` — optional, defaults to `HomeShare Watcher <onboarding@resend.dev>`
+   - `EMAIL_TO` — `rayraa@outlook.ie` (or wherever notifications should go,
+     must match the address you signed up to Resend with unless you've
+     verified a custom domain)
+4. The workflow at `.github/workflows/check-opportunities.yml` runs on a
    `*/15 * * * *` cron schedule automatically once merged to the default
    branch. You can also trigger it manually from the Actions tab
    ("Run workflow").
@@ -35,9 +38,8 @@ and emails a notification whenever a new listing appears.
 
 ```bash
 pip install -r requirements.txt
-export SMTP_USERNAME="rayraa@outlook.ie"
-export SMTP_PASSWORD="xxxx-xxxx-xxxx-xxxx"   # app password
-export EMAIL_FROM="rayraa@outlook.ie"
+export RESEND_API_KEY="re_xxxxxxxx"
+export EMAIL_FROM="HomeShare Watcher <onboarding@resend.dev>"
 export EMAIL_TO="rayraa@outlook.ie"
 python check_opportunities.py
 ```

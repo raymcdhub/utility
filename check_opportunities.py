@@ -1,8 +1,6 @@
 import json
 import os
-import smtplib
 import sys
-from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -55,11 +53,8 @@ def save_seen(slugs):
 
 
 def send_email(new_opportunities):
-    smtp_host = os.environ.get("SMTP_HOST", "smtp-mail.outlook.com")
-    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
-    smtp_user = os.environ["SMTP_USERNAME"]
-    smtp_password = os.environ["SMTP_PASSWORD"]
-    email_from = os.environ.get("EMAIL_FROM", smtp_user)
+    api_key = os.environ["RESEND_API_KEY"]
+    email_from = os.environ.get("EMAIL_FROM", "HomeShare Watcher <onboarding@resend.dev>")
     email_to = os.environ["EMAIL_TO"]
 
     count = len(new_opportunities)
@@ -67,15 +62,13 @@ def send_email(new_opportunities):
     lines = [f"{opp['title']}\n{opp['url']}\n" for opp in new_opportunities]
     body = "\n".join(lines)
 
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = email_from
-    msg["To"] = email_to
-
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.sendmail(email_from, [email_to], msg.as_string())
+    response = requests.post(
+        "https://api.resend.com/emails",
+        headers={"Authorization": f"Bearer {api_key}"},
+        json={"from": email_from, "to": [email_to], "subject": subject, "text": body},
+        timeout=30,
+    )
+    response.raise_for_status()
 
 
 def main():
