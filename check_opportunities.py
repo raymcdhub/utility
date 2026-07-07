@@ -54,7 +54,7 @@ def save_seen(slugs):
 
 def send_email(new_opportunities):
     api_key = os.environ["RESEND_API_KEY"]
-    email_from = os.environ.get("EMAIL_FROM", "HomeShare Watcher <onboarding@resend.dev>")
+    email_from = os.environ.get("EMAIL_FROM") or "HomeShare Watcher <onboarding@resend.dev>"
     email_to = os.environ["EMAIL_TO"]
 
     count = len(new_opportunities)
@@ -68,6 +68,8 @@ def send_email(new_opportunities):
         json={"from": email_from, "to": [email_to], "subject": subject, "text": body},
         timeout=30,
     )
+    if not response.ok:
+        print(f"Resend API error {response.status_code}: {response.text}", file=sys.stderr)
     response.raise_for_status()
 
 
