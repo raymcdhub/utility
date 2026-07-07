@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from urllib.parse import urljoin
@@ -10,6 +11,15 @@ from bs4 import BeautifulSoup
 LISTING_URL = "https://thehomeshare.ie/opportunities/"
 BASE_URL = "https://thehomeshare.ie"
 STATE_FILE = Path(__file__).parent / "data" / "seen_opportunities.json"
+
+# Slugs encode the monthly price (e.g. "...-eur345-p-m/"), and the site
+# reissues a new slug when a listing's price changes. Stripping that suffix
+# gives a stable key so a price change isn't mistaken for a new listing.
+PRICE_SUFFIX_RE = re.compile(r"-eur\d+-?p-m/?$")
+
+
+def base_key(slug):
+    return PRICE_SUFFIX_RE.sub("", slug)
 
 HEADERS = {
     "User-Agent": (
@@ -88,7 +98,8 @@ def main():
         print(f"Bootstrapped state file with {len(opportunities)} existing listings.")
         return
 
-    new_slugs = [slug for slug in opportunities if slug not in seen]
+    seen_base_keys = {base_key(slug) for slug in seen}
+    new_slugs = [slug for slug in opportunities if base_key(slug) not in seen_base_keys]
 
     if new_slugs:
         new_opportunities = [opportunities[slug] for slug in new_slugs]
