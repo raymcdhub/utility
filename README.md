@@ -1,7 +1,15 @@
 # HomeShare Opportunity Watcher
 
-Polls https://thehomeshare.ie/opportunities/ every 15 minutes via GitHub Actions
-and emails a notification whenever a new listing appears.
+Polls https://thehomeshare.ie/opportunities/ roughly every 10-15 minutes via
+GitHub Actions and emails a notification whenever a new listing appears.
+
+**Note on triggering:** GitHub's native `schedule` cron trigger turned out to
+be unreliable for this repo in practice — measured averaging ~2 hours between
+runs instead of the configured 15 minutes (a known GitHub Actions limitation
+for low-activity/private repos, not a bug in this workflow). The primary
+trigger is now an external cron service (see step 5 below) that calls the
+GitHub API to fire the workflow on a reliable schedule; the `schedule` cron
+in the workflow file is kept only as an hourly backup.
 
 ## How it works
 
@@ -29,10 +37,29 @@ and emails a notification whenever a new listing appears.
    - `EMAIL_TO` — `rayraa@outlook.ie` (or wherever notifications should go,
      must match the address you signed up to Resend with unless you've
      verified a custom domain)
-4. The workflow at `.github/workflows/check-opportunities.yml` runs on a
-   `*/15 * * * *` cron schedule automatically once merged to the default
-   branch. You can also trigger it manually from the Actions tab
+4. The workflow at `.github/workflows/check-opportunities.yml` also runs on
+   an hourly cron schedule as a backup, automatically once merged to the
+   default branch. You can also trigger it manually from the Actions tab
    ("Run workflow").
+5. **Set up the reliable external trigger** (recommended — see note above):
+   1. Create a fine-grained personal access token at
+      https://github.com/settings/personal-access-tokens/new, scoped to
+      **only this repository**, with repository permission
+      **Contents: Read and write**. Give it an expiration (e.g. 1 year) and
+      save the token somewhere safe — GitHub only shows it once.
+   2. Sign up for a free account at https://cron-job.org.
+   3. Create a new cronjob with:
+      - **URL**: `https://api.github.com/repos/raymcdhub/utility/dispatches`
+      - **Method**: `POST`
+      - **Schedule**: every 10 minutes
+      - **Headers**:
+        - `Authorization: Bearer <your PAT>`
+        - `Accept: application/vnd.github+json`
+        - `X-GitHub-Api-Version: 2022-11-28`
+        - `Content-Type: application/json`
+      - **Body**: `{"event_type": "check-opportunities"}`
+   4. Save. A successful trigger returns HTTP 204 with an empty body; check
+      the repo's Actions tab to confirm runs are firing every ~10 minutes.
 
 ## Local testing
 

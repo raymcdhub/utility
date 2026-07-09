@@ -1,9 +1,19 @@
 name: Check HomeShare opportunities
 
 on:
+  repository_dispatch:
+    types: [check-opportunities]
   schedule:
-    - cron: "*/15 * * * *"
+    # Backup only — GitHub's schedule trigger is unreliable for this repo in
+    # practice (observed averaging ~2h between runs instead of 15m), so the
+    # primary trigger is an external cron service hitting the GitHub API's
+    # repository_dispatch endpoint. See README for setup.
+    - cron: "23 * * * *"
   workflow_dispatch: {}
+
+concurrency:
+  group: check-opportunities
+  cancel-in-progress: false
 
 permissions:
   contents: write
