@@ -3,6 +3,14 @@
 Polls https://thehomeshare.ie/opportunities/ roughly every 10-15 minutes via
 GitHub Actions and emails a notification whenever a new listing appears.
 
+**This repo is public on purpose:** GitHub Actions minutes are unlimited and
+free for public repos, but capped at 2,000 min/month for private ones. At a
+10-minute polling interval that cap is exhausted in under two weeks, after
+which GitHub blocks further runs until a payment method / spending limit is
+added. No secrets live in this repo (they're all GitHub Actions secrets) and
+the committed data file only contains public listing slugs, so there's
+nothing sensitive exposed by making it public.
+
 **Note on triggering:** GitHub's native `schedule` cron trigger turned out to
 be unreliable for this repo in practice — measured averaging ~2 hours between
 runs instead of the configured 15 minutes (a known GitHub Actions limitation
